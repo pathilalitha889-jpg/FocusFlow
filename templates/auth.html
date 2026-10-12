@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#7663d8">
+    <title>{{ 'Create account' if mode == 'register' else 'Log in' }} — FocusFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+</head>
+<body class="auth-body">
+    <main class="auth-layout">
+        <section class="auth-brand-panel">
+            <a class="auth-brand" href="{{ url_for('login') }}"><span class="brand-mark">F</span><span>FocusFlow<small>PLAN WITH PURPOSE</small></span></a>
+            <div class="brand-message">
+                <span class="brand-kicker">YOUR SPACE TO FOCUS</span>
+                <h1>Make room for<br><span>your next win.</span></h1>
+                <p>Keep your study tasks organized, protect your focus time, and notice your progress one day at a time.</p>
+                <div class="feature-chips"><span>✓ Personal task list</span><span>◷ Focus timer</span><span>✦ Progress at a glance</span></div>
+            </div>
+            <div class="brand-footnote">Small steps every day lead to big results.</div>
+            <div class="decor decor-one"></div><div class="decor decor-two"></div>
+        </section>
+        <section class="auth-form-panel">
+            <div class="auth-card">
+                <div class="mobile-brand"><span class="brand-mark">F</span><strong>FocusFlow</strong></div>
+                <p class="auth-eyebrow">{{ 'GET STARTED' if mode == 'register' else 'WELCOME BACK' }}</p>
+                <h2>{{ 'Create your account' if mode == 'register' else 'Log in to FocusFlow' }}</h2>
+                <p class="auth-subtitle">{{ 'Set up your personal study space in a minute.' if mode == 'register' else 'Your tasks are waiting for you.' }}</p>
+                {% if error %}<div class="auth-error" role="alert">{{ error }}</div>{% endif %}
+                <form class="auth-form" action="{{ url_for('register' if mode == 'register' else 'login') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if mode == 'register' %}
+                    <label for="name">Your name</label>
+                    <input id="name" name="name" type="text" minlength="2" maxlength="50" autocomplete="name" placeholder="e.g. Pathi" required value="{{ request.form.get('name', '') }}">
+                    {% endif %}
+                    <label for="email">Email address</label>
+                    <input id="email" name="email" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required value="{{ request.form.get('email', '') }}">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" minlength="8" maxlength="128" autocomplete="{{ 'new-password' if mode == 'register' else 'current-password' }}" placeholder="At least 8 characters" required>
+                    {% if mode == 'register' %}
+                    <label for="confirm_password">Confirm password</label>
+                    <input id="confirm_password" name="confirm_password" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Enter your password again" required>
+                    {% endif %}
+                    <button class="auth-submit" type="submit">{{ 'Create account' if mode == 'register' else 'Log in' }} <span>→</span></button>
+                </form>
+                <p class="auth-switch">{{ 'Already have an account?' if mode == 'register' else "Don't have an account yet?" }} <a href="{{ url_for('login' if mode == 'register' else 'register') }}">{{ 'Log in' if mode == 'register' else 'Create one' }}</a></p>
+                <p class="privacy-note"><span>◆</span> Your tasks are saved to your account on this device's app database.</p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

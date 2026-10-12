@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#7663d8">
+    <title>FocusFlow — Your student planner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-user-id="{{ user_id }}">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" href="/">
+                <span class="brand-mark">F</span>
+                <span>FocusFlow<small>PLAN WITH PURPOSE</small></span>
+            </a>
+
+            <div class="side-label">WORKSPACE</div>
+            <button class="nav-item active" type="button" data-view="all">
+                <span>▦</span> My tasks
+            </button>
+            <button class="nav-item" type="button" data-view="pending">
+                <span>◷</span> To do
+            </button>
+            <button class="nav-item" type="button" data-view="completed">
+                <span>✓</span> Completed
+            </button>
+
+            <div class="sidebar-bottom">
+                <div class="quote-card">
+                    <span class="quote-icon">✦</span>
+                    <p>Small steps every day lead to big results.</p>
+                    <small>YOUR DAILY REMINDER</small>
+                </div>
+                <div class="profile">
+                    <div class="avatar">{{ username[0]|upper }}</div>
+                    <div><strong>{{ username }}</strong><small>Signed in · one task at a time</small></div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow" id="todayDate">YOUR STUDY SPACE</p>
+                    <h1>Make today <span>count.</span></h1>
+                    <p class="subtitle">A little progress each day adds up.</p>
+                </div>
+                <div class="top-actions">
+                    <span class="status-dot"></span><span class="online-label">Signed in as {{ username }}</span>
+                    <form class="logout-form" action="{{ url_for('logout') }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="logout-btn" type="submit">Log out</button>
+                    </form>
+                </div>
+            </header>
+
+            <section class="stats-grid" aria-label="Task statistics">
+                <article class="stat-card purple-card">
+                    <div class="stat-top"><span>Total tasks</span><span class="stat-icon">▤</span></div>
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-foot">Everything on your list</div>
+                </article>
+                <article class="stat-card green-card">
+                    <div class="stat-top"><span>Completed</span><span class="stat-icon">✓</span></div>
+                    <div class="stat-number" id="completedCount">0</div>
+                    <div class="stat-foot">Every win matters</div>
+                </article>
+                <article class="stat-card orange-card">
+                    <div class="stat-top"><span>Pending</span><span class="stat-icon">◷</span></div>
+                    <div class="stat-number" id="pendingCount">0</div>
+                    <div class="stat-foot">One step at a time</div>
+                </article>
+                <article class="stat-card blue-card">
+                    <div class="stat-top"><span>Focus minutes</span><span class="stat-icon">◉</span></div>
+                    <div class="stat-number" id="focusMinutes">0</div>
+                    <div class="stat-foot">Time spent in focus sessions</div>
+                </article>
+            </section>
+
+            <section class="content-grid">
+                <div class="panel tasks-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">YOUR PLAN</p>
+                            <h2 id="taskHeading">My tasks <span id="visibleTaskCount">0</span></h2>
+                        </div>
+                        <button class="primary-btn" id="addBtn" type="button">＋ Add task</button>
+                    </div>
+
+                    <form id="taskForm" class="task-form" hidden>
+                        <div class="form-field title-field">
+                            <label for="taskInput">Task name</label>
+                            <input id="taskInput" name="title" type="text" maxlength="160"
+                                   placeholder="e.g. Revise Java arrays" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="taskCategory">Category</label>
+                                <select id="taskCategory" name="category">
+                                    <option>Study</option>
+                                    <option>Assignment</option>
+                                    <option>Exam</option>
+                                    <option>Personal</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label for="taskDeadline">Deadline date & time (optional)</label>
+                                <input id="taskDeadline" name="deadline" type="datetime-local" step="60">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button class="secondary-btn" id="cancelBtn" type="button">Cancel</button>
+                            <button class="primary-btn" id="saveTaskBtn" type="submit">Save task</button>
+                        </div>
+                    </form>
+
+                    <div class="reminder-settings" aria-label="Task reminder settings">
+                        <div class="reminder-copy">
+                            <strong><span aria-hidden="true">🔔</span> Task reminders</strong>
+                            <span id="reminderStatus">Enable alerts to get a notification and alarm sound 5 minutes before a deadline.</span>
+                        </div>
+                        <button class="secondary-btn reminder-enable" id="enableRemindersBtn" type="button">Enable alerts</button>
+                    </div>
+
+                    <div class="filter-row" role="group" aria-label="Filter tasks">
+                        <button class="filter-btn selected" type="button" data-filter="all">All tasks</button>
+                        <button class="filter-btn" type="button" data-filter="pending">Pending</button>
+                        <button class="filter-btn" type="button" data-filter="completed">Completed</button>
+                    </div>
+
+                    <div id="errorMessage" class="error-message" role="alert" hidden></div>
+                    <div id="taskList" class="task-list">
+                        <div class="loading-state">Loading your tasks…</div>
+                    </div>
+                    <div class="task-footer">
+                        <div class="progress-track"><div id="taskProgress" class="progress-fill"></div></div>
+                        <span id="progressText">0% completed</span>
+                    </div>
+                </div>
+
+                <div class="right-column">
+                    <section class="panel focus-panel">
+                        <div class="panel-heading compact-heading">
+                            <div><p class="eyebrow">STAY IN THE ZONE</p><h2>Focus timer</h2></div>
+                            <span class="timer-sparkle">✦</span>
+                        </div>
+                        <div class="timer-wrap">
+                            <div class="timer-circle" id="timerCircle">
+                                <div class="timer-inner">
+                                    <strong id="timer">25:00</strong>
+                                    <span id="timerMode">FOCUS SESSION</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mode-row">
+                            <button class="mode-btn active" type="button" data-mode="focus" data-minutes="25">Focus · 25m</button>
+                            <button class="mode-btn" type="button" data-mode="break" data-minutes="5">Break · 5m</button>
+                        </div>
+                        <div class="timer-actions">
+                            <button class="primary-btn timer-start" id="startBtn" type="button">▶ Start focus</button>
+                            <button class="icon-btn" id="resetBtn" type="button" aria-label="Reset timer" title="Reset timer">↻</button>
+                        </div>
+                        <p class="timer-note">One focused session is a win.</p>
+                    </section>
+
+                    <section class="panel week-panel">
+                        <div class="panel-heading compact-heading">
+                            <div><p class="eyebrow">YOUR MOMENTUM</p><h2>This week</h2></div>
+                            <span class="week-total" id="chartTotal">0 wins</span>
+                        </div>
+                        <div id="chartArea" class="chart-area" aria-label="Weekly completed tasks chart"></div>
+                        <div class="chart-legend"><span></span> Tasks completed</div>
+                    </section>
+                </div>
+            </section>
+            <footer class="app-footer">Made for steady progress <span>✦</span></footer>
+        </main>
+    </div>
+
+    <div id="reminderToast" class="reminder-toast" role="status" aria-live="polite" hidden>
+        <span class="reminder-toast-icon" aria-hidden="true">⏰</span>
+        <div class="reminder-toast-copy">
+            <strong id="reminderToastTitle">Task reminder</strong>
+            <p id="reminderToastMessage"></p>
+        </div>
+        <button id="closeReminderToast" type="button" aria-label="Dismiss reminder">×</button>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</body>
+</html>
